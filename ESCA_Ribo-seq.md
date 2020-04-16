@@ -78,9 +78,8 @@
 ### Read length selection of Ribo-Seq
 选择比对到基因组上后匹配碱基数量在26=< X =< 32区间的Ribo-seq reads做后续定量分析。
 方法参考该文献  
-> Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.
-> In order to maximize the genuine ribosome footprints aligning to the transcriptome, ribo-seq reads with a length
-typical for monosomes (29–35 inclusive) were used for further analysis. 
+> Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.  
+> In order to maximize the genuine ribosome footprints aligning to the transcriptome, ribo-seq reads with a length typical for monosomes (29–35 inclusive) were used for further analysis.   
 > 由于使用[Ribocode](https://github.com/xryanglab/RiboCode) 分析得到本次Ribo-seq测序的3nt周期性出现在28nt/29nt reads，所以调整为26~32 nt.
 
 ```
@@ -136,9 +135,8 @@ system("$samtools index -b $outBam > $outBai");
 ### Reads Counting  
 使用featureCount统计基因上的read count数量。
 对于Ribo-Seq数据，我们只统计比对到CDS区域的reads数量，对于mRNA-seq数据，计数落在整个转录本的reads。参考该文献做法：
-> Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.
-> The normalized read counts of ribo-seq reads aligning to the coding regions (as determined by
-inferred locations of the A-site codons) and of mRNA-seq reads aligning to the entire transcript were used for the differential expression analysis.
+> Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.  
+> The normalized read counts of ribo-seq reads aligning to the coding regions (as determined by inferred locations of the A-site codons) and of mRNA-seq reads aligning to the entire transcript were used for the differential expression analysis.
 
 - mRNA
 ```
