@@ -78,9 +78,10 @@
 ### Read length selection of Ribo-Seq
 选择比对到基因组上后匹配碱基数量在26=< X =< 32区间的Ribo-seq reads做后续定量分析。
 方法参考该文献  
-- Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.
-- In order to maximize the genuine ribosome footprints aligning to the transcriptome, ribo-seq reads with a length
+> Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.
+> In order to maximize the genuine ribosome footprints aligning to the transcriptome, ribo-seq reads with a length
 typical for monosomes (29–35 inclusive) were used for further analysis. 
+> 由于使用[Ribocode](https://github.com/xryanglab/RiboCode) 分析得到本次Ribo-seq测序的3nt周期性出现在28nt/29nt reads，所以调整为26~32 nt.
 
 ```
 perl /BioII/lulab_b/chenyinghui/project/ESCA_riboSeq/Ribo_Seq/bin/get_fit_reads.pl -inBam $outDir/${i}/$i.Aligned.sortedByCoord.out.bam -outBam $outDir/${i}/$i.sorted.fit_length.bam
@@ -131,4 +132,62 @@ close TEMP;
 system("$samtools view -hb -o $outBam $outSam");
 system("rm $outSam");
 system("$samtools index -b $outBam > $outBai");
+```
+### Reads Counting  
+使用featureCount统计基因上的read count数量。
+对于Ribo-Seq数据，我们只统计比对到CDS区域的reads数量，对于mRNA-seq数据，计数落在整个转录本的reads。参考该文献做法：
+> Dmitry E Andreev, et al. Translation of 5′ leaders is pervasive in genes resistant to eIF2 repression. eLife. 2015.
+> The normalized read counts of ribo-seq reads aligning to the coding regions (as determined by
+inferred locations of the A-site codons) and of mRNA-seq reads aligning to the entire transcript were used for the differential expression analysis.
+
+- mRNA
+```
+$featureCount -T 2 -s 0 -p -t exon -g gene_id -a $GTF -o $outDir/${i}.featurecounts.txt $dataPath/$i/${i}.Aligned.sortedByCoord.out.bam
+```
+- Ribo-seq
+```
+$featureCount -T 2 -s 0 -p -t CDS -g gene_id -a $GTF -o $outDir/${i}.featurecounts.txt $dataPath/$i/${i}.sorted.fit_length.bam
+```
+
+### Diff TE gene detection
+使用[Xtail](https://www.nature.com/articles/ncomms11194) 检测TE发生差异性变化的基因。
+> [Xtail Github](https://github.com/xryanglab/xtail)
+
+```
+library(xtail)
+ribo <- read.table('/BioII/lulab_b/chenyinghui/project/ESCA_riboSeq/Ribo_Seq/02.read_count_featurecount_merge/ctrl_mut.featurecounts.txt',header=T, quote='',check.names=F, sep='\t',row.names=1)
+mrna <- read.table('/BioII/lulab_b/chenyinghui/project/ESCA_riboSeq/mRNA_Seq/04.read_count_featurecount_merge/ctrl_mut.featurecounts.txt',header=T, quote='',check.names=F, sep='\t',row.names=1)
+
+condition <- c("control","control","treat","treat")
+results <- xtail(mrna,ribo,condition,minMeanCount=1,bins=10000)
+results_tab <- resultsTable(results,sort.by="pvalue.adjust",log2FCs=TRUE, log2Rs=TRUE)
+write.table(results_tab,"05.TE_Xtail/ctrl_mut.TE.xls",quote=F,sep="\t")
+
+pdf("05.TE_Xtail/ctrl_mut.plotFCs.pdf")
+plotFCs(results)
+dev.off()
+
+pdf("05.TE_Xtail/ctrl_mut.plotRs.pdf")
+plotRs(results)
+dev.off()
+
+pdf("05.TE_Xtail/ctrl_mut.volcanoPlot.pdf")
+volcanoPlot(results)
+dev.off()
+```
+
+### GSEA pre-ranked analysis
+
+使用标有log2(TE_Foldchage)的 TE差异基因列表进行[GSEA pre-ranked analysis](https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?_GSEAPreranked_Page)，可以知道哪些基因集富集了TE上调基因或富集了TE下调基因。
+
+```
+#filter by pvalue
+python ./bin/filter.TE.Xtail.py pvalue $outdir/ctrl_mut.TE.xls $mRNA_readcount_Dir/ctrl_mut.featurecounts.txt $ribo_readcount_Dir/ctrl_mut.featurecounts.txt  /BioII/lulab_b/chenyinghui/database/Homo_sapiens/GRCh38/gencode.v32.annotation.gene_info.bed $outdir/ctrl_mut.TE.annot.xls $outdir/ctrl_mut.TE.up.pvalue_sig.xls $outdir/ctrl_mut.TE.down.pvalue_sig.xls $outdir/ctrl_mut.TE.pvalue.mapStat.xls
+
+#filter by  FDR
+python ./bin/filter.TE.Xtail.py FDR $outdir/ctrl_mut.TE.xls $mRNA_readcount_Dir/ctrl_mut.featurecounts.txt $ribo_readcount_Dir/ctrl_mut.featurecounts.txt /BioII/lulab_b/chenyinghui/database/Homo_sapiens/GRCh38/gencode.v32.annotation.gene_info.bed $outdir/ctrl_mut.TE.annot.xls $outdir/ctrl_mut.TE.up.FDR_sig.xls $outdir/ctrl_mut.TE.down.FDR_sig.xls $outdir/ctrl_mut.TE.FDR.mapStat.xls
+
+cat $outdir/ctrl_mut.TE.up.pvalue_sig.xls | grep -v "gene_ID" |awk -F "\t" '{print $1"\t"$13}' > $outdir/ctrl_mut.TE.pvalue_sig.genelist.rnk
+cat $outdir/ctrl_mut.TE.down.pvalue_sig.xls| grep -v "gene_ID" |awk -F "\t" '{print $1"\t"$13}' >> $outdir/ctrl_mut.TE.pvalue_sig.genelist.rnk
+
 ```
