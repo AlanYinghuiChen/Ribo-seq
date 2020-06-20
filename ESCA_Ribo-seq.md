@@ -190,14 +190,14 @@ cat $outdir/ctrl_mut.TE.down.pvalue_sig.xls| grep -v "gene_ID" |awk -F "\t" '{pr
 
 ```
 ### RPF差异基因分析，以及GO富集
-使用EdgeR分析Ribo-seq中RPF差异的基因(wt-vs-mut)，RPF显著上调的基因说明Ribosome显著富集在该基因。
-取EdgeR得到的RPF显著上调的基因（p-value < 0.05 & log2FC > 0.45）进行GO富集分析（软件：[clusterProfiler](https://guangchuangyu.github.io/software/clusterProfiler/)）
+使用EdgeR分析Ribo-seq中RPF差异的基因(wt-vs-mut)，RPF显著上调的基因说明Ribosome显著富集在该基因。  
+取EdgeR得到的RPF显著上调的基因（p-value < 0.05 & log2FC > 0.45）进行GO富集分析（软件：[clusterProfiler](https://guangchuangyu.github.io/software/clusterProfiler/)）  
 
 ### 散点图 (mRNA_log2FC -- RPF_log2FC)
-mRNA_log2FC与RPF_log2FC都是由Xtail得到的结果表中的值。
-Ribosome散点图中的基因列表来自KEGG
-MAPK 通路基因来自李扬从Review上收集得到
+mRNA_log2FC与RPF_log2FC都是由Xtail得到的结果表中的值。  
+Ribosome散点图中的基因列表来自KEGG   
+MAPK 通路基因来自李扬从Review上收集得到   
 
 ### 热图 (mRNA_log2FC -- RPF_log2FC -- TE_log2FC)
-mRNA_log2FC、RPF_log2FC与TE_log2FC都是由Xtail得到的结果表中的值(log2FC_TE_final)。
-作图软件: [pheatmap](https://www.rdocumentation.org/packages/pheatmap/versions/1.0.12/topics/pheatmap)
+mRNA_log2FC、RPF_log2FC与TE_log2FC都是由Xtail得到的结果表中的值(log2FC_TE_final)。  
+作图软件: [pheatmap](https://www.rdocumentation.org/packages/pheatmap/versions/1.0.12/topics/pheatmap)  
